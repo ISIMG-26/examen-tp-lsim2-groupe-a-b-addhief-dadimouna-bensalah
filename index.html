@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roulez.tn — Location de Véhicules en Tunisie</title>
+  <meta name="description" content="Louez voiture, moto, scooter ou vélo entre particuliers en Tunisie. Simple, sécurisé, économique.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">Roulez<span>.tn</span></a>
+
+    <div class="nav-links">
+      <a href="browser.html">🔍 Emprunter un véhicule</a>
+      <a href="lend.html">➕ Prêter mon véhicule</a>
+      <a href="detail.html">❓ Comment ça marche</a>
+    </div>
+
+    <div class="nav-right">
+      <span id="nav-user-name" style="display:none"></span>
+      <button id="nav-login-btn" class="btn btn-primary btn-sm" onclick="openModal('auth-modal')">Connexion</button>
+      <button id="nav-logout-btn" class="btn btn-ghost btn-sm" style="display:none" onclick="logout()">Déconnexion</button>
+      <button class="nav-mobile-toggle">☰</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-badge">🇹🇳 Plateforme Tunisienne #1</div>
+      <h1>Louez un véhicule<br>entre <em>particuliers</em></h1>
+      <p>Voiture, moto, scooter ou vélo — trouvez le véhicule idéal auprès de Tunisiens de confiance, au meilleur prix.</p>
+      <div class="hero-actions">
+        <a href="browse.html" class="btn btn-primary btn-lg">🔍 Parcourir les annonces</a>
+        <a href="lend.html" class="btn btn-outline btn-lg" style="color:#fff;border-color:rgba(255,255,255,0.4)">➕ Mettre en location</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item"><div class="stat-num" id="stat-machines">—</div><div class="stat-label">Véhicules disponibles</div></div>
+        <div class="stat-item"><div class="stat-num">3%</div><div class="stat-label">Commission seulement</div></div>
+        <div class="stat-item"><div class="stat-num">24</div><div class="stat-label">Gouvernorats couverts</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ SEARCH ═══════════════════════ -->
+<section class="search-section">
+  <div class="container">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="home-search" placeholder="Rechercher par marque, modèle, ville…" autocomplete="off">
+      <button class="btn btn-primary" onclick="doSearch()">Rechercher</button>
+    </div>
+    <div class="cat-tabs" id="cat-tabs">
+      <button class="cat-tab active" data-type="all" onclick="filterCat(this,'all')"><span class="cat-icon">🚘</span> Tous</button>
+      <button class="cat-tab" data-type="car"        onclick="filterCat(this,'car')"><span class="cat-icon">🚗</span> Voitures</button>
+      <button class="cat-tab" data-type="motorcycle" onclick="filterCat(this,'motorcycle')"><span class="cat-icon">🏍️</span> Motos</button>
+      <button class="cat-tab" data-type="scooter"    onclick="filterCat(this,'scooter')"><span class="cat-icon">🛵</span> Scooters</button>
+      <button class="cat-tab" data-type="bike"       onclick="filterCat(this,'bike')"><span class="cat-icon">🚲</span> Vélos</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ LISTINGS ═══════════════════════ -->
+<section class="section-pad">
+  <div class="container">
+    <div class="results-bar">
+      <div>
+        <h2>Annonces disponibles</h2>
+        <p class="results-count" id="results-count">Chargement…</p>
+      </div>
+      <a href="browse.html" class="btn btn-ghost">Voir tout →</a>
+    </div>
+
+    <div id="machines-grid" class="grid-3">
+      <div class="loading-overlay" style="grid-column:1/-1">
+        <div class="spinner"></div> Chargement des annonces…
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ HOW IT WORKS ═══════════════════════ -->
+<section class="section-pad" style="background:var(--white)">
+  <div class="container text-center">
+    <h2 style="margin-bottom:8px">Comment ça marche ?</h2>
+    <p style="color:var(--gray);margin-bottom:48px">Simple, rapide et sécurisé en 3 étapes</p>
+    <div class="grid-3">
+      <div class="step-card" data-step="1">
+        <div class="step-icon">🔍</div>
+        <h3>Cherchez</h3>
+        <p>Parcourez les annonces, filtrez par type de véhicule, ville et dates de disponibilité.</p>
+      </div>
+      <div class="step-card" data-step="2">
+        <div class="step-icon">📋</div>
+        <h3>Réservez</h3>
+        <p>Choisissez vos dates, remplissez le contrat en ligne et payez en toute sécurité.</p>
+      </div>
+      <div class="step-card" data-step="3">
+        <div class="step-icon">🛣️</div>
+        <h3>Roulez !</h3>
+        <p>Récupérez le véhicule et profitez de votre liberté. Simple comme bonjour.</p>
+      </div>
+    </div>
+    <div style="margin-top:36px">
+      <a href="how.html" class="btn btn-outline">En savoir plus</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-logo">Roulez<em>.tn</em></div>
+        <p class="footer-desc">La première plateforme tunisienne de location de véhicules entre particuliers. Simple, sécurisée et économique.</p>
+      </div>
+      <div>
+        <div class="footer-heading">Navigation</div>
+        <ul class="footer-links">
+          <li><a href="browser.html">Emprunter un véhicule</a></li>
+          <li><a href="lend.html">Prêter mon véhicule</a></li>
+          <li><a href="detail.html">Comment ça marche</a></li>
+          <li><a href="#" onclick="openModal('auth-modal')">Mon compte</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-heading">Légal</div>
+        <ul class="footer-links">
+          <li><a href="#">Conditions d'utilisation</a></li>
+          <li><a href="#">Politique de confidentialité</a></li>
+          <li><a href="#">Assurance & protection</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Roulez.tn — Tous droits réservés</span>
+      <span class="tunisia-flag">
+        <span class="flag-bar flag-red"></span>
+        <span class="flag-bar flag-white"></span>
+        <span class="flag-bar flag-red"></span>
+        Fait avec ❤️ en Tunisie
+      </span>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════════════════════ AUTH MODAL ═══════════════════════ -->
+<div id="auth-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Mon Compte</h3>
+      <button class="modal-close" onclick="closeModal('auth-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-tab="login">Se connecter</div>
+        <div class="auth-tab" data-tab="register">S'inscrire</div>
+      </div>
+
+      <!-- Login Panel -->
+      <div id="login-panel" class="auth-panel">
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email <span class="required">*</span></label>
+            <input type="email" id="login-email" name="email" class="form-control" placeholder="votre@email.com">
+            <span class="form-error"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-password">Mot de passe <span class="required">*</span></label>
+            <input type="password" id="login-password" name="password" class="form-control" placeholder="••••••••">
+            <span class="form-error"></span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Se connecter</button>
+        </form>
+      </div>
+
+      <!-- Register Panel -->
+      <div id="register-panel" class="auth-panel hidden">
+        <form id="register-form" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="reg-name">Nom complet <span class="required">*</span></label>
+              <input type="text" id="reg-name" name="full_name" class="form-control" placeholder="Ahmed Ben Salah">
+              <span class="form-error"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-cin">CIN <span class="required">*</span></label>
+              <input type="text" id="reg-cin" name="cin" class="form-control" placeholder="08123456">
+              <span class="form-error"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-email">Email <span class="required">*</span></label>
+            <input type="email" id="reg-email" name="email" class="form-control" placeholder="votre@email.com">
+            <span class="form-error"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-phone">Téléphone <span class="required">*</span></label>
+            <input type="tel" id="reg-phone" name="phone" class="form-control" placeholder="+216 XX XXX XXX">
+            <span class="form-error"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-password">Mot de passe <span class="required">*</span></label>
+            <input type="password" id="reg-password" name="password" class="form-control" placeholder="Minimum 6 caractères">
+            <span class="form-error"></span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">S'inscrire gratuitement</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="main.js"></script>
+<script>
+  let currentType = 'all';
+
+  function filterCat(btn, type) {
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    currentType = type;
+    loadMachines();
+  }
+
+  function doSearch() {
+    const q = document.getElementById('home-search').value.trim();
+    if (q) window.location.href = `browse.html?q=${encodeURIComponent(q)}`;
+    else   loadMachines();
+  }
+
+  document.getElementById('home-search').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSearch();
+  });
+
+  function loadMachines() {
+    const grid = document.getElementById('machines-grid');
+    grid.innerHTML = '<div class="loading-overlay" style="grid-column:1/-1"><div class="spinner"></div> Chargement…</div>';
+
+    const params = new URLSearchParams({ action: 'list' });
+    if (currentType !== 'all') params.append('type', currentType);
+
+    fetch('php/machines.php?' + params.toString())
+      .then(r => r.json())
+      .then(data => {
+        const machines = data.machines || [];
+        const shown    = machines.slice(0, 6); // show 6 on homepage
+
+        // Update stat counter
+        document.getElementById('stat-machines').textContent = data.count;
+        document.getElementById('results-count').innerHTML = `<strong>${data.count}</strong> annonce(s) trouvée(s)`;
+
+        if (shown.length === 0) {
+          grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+            <div class="empty-icon">🔍</div>
+            <h3>Aucun véhicule trouvé</h3>
+            <p>Essayez une autre catégorie ou <a href="lend.html" style="color:var(--red)">soyez le premier à en ajouter un!</a></p>
+          </div>`;
+          return;
+        }
+
+        grid.innerHTML = shown.map(renderMachineCard).join('');
+      })
+      .catch(() => {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-icon">⚠️</div>
+          <h3>Erreur de chargement</h3>
+          <p>Vérifiez que le serveur PHP est actif (XAMPP/WAMP).</p>
+        </div>`;
+      });
+  }
+
+  loadMachines();
+</script>
+</body>
+</html>

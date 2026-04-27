@@ -5,7 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Prêter mon véhicule — Roulez.tn</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .type-selector { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 8px; }
+    .type-option {
+      border: 2px solid var(--sand); border-radius: var(--radius-sm);
+      padding: 16px 12px; text-align: center; cursor: pointer;
+      transition: var(--transition); background: var(--white);
+    }
+    .type-option:hover { border-color: var(--red); }
+    .type-option.selected { border-color: var(--red); background: rgba(193,39,45,0.05); }
+    .type-option .type-opt-icon { font-size: 1.8rem; margin-bottom: 6px; }
+    .type-option .type-opt-label { font-size: 0.8rem; font-weight: 600; color: var(--charcoal); }
+    .upload-area {
+      border: 2px dashed var(--sand-dark); border-radius: var(--radius-sm);
+      padding: 32px; text-align: center; cursor: pointer;
+      transition: var(--transition); background: var(--gray-lt);
+    }
+    .upload-area:hover, .upload-area.dragover { border-color: var(--red); background: rgba(193,39,45,0.04); }
+    .upload-preview { max-height: 180px; border-radius: var(--radius-sm); margin-top: 12px; }
+    @media(max-width:600px){ .type-selector{ grid-template-columns: repeat(2,1fr); } }
+  </style>
 </head>
+<body>
+
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">Roulez<span>.tn</span></a>
+    <div class="nav-links">
+      <a href="browser.html">🔍 Emprunter un véhicule</a>
+      <a href="lend.html">➕ Prêter mon véhicule</a>
+      <a href="detail.html">❓ Comment ça marche</a>
+    </div>
+    <div class="nav-right">
+      <span id="nav-user-name" style="display:none"></span>
+      <button id="nav-login-btn" class="btn btn-primary btn-sm" onclick="openModal('auth-modal')">Connexion</button>
+      <button id="nav-logout-btn" class="btn btn-ghost btn-sm" style="display:none" onclick="logout()">Déconnexion</button>
+      <button class="nav-mobile-toggle">☰</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════ PAGE HEADER ═══════════════════════ -->
 <div class="page-header">
   <div class="container">
     <p class="breadcrumb"><a href="index.html">Accueil</a> / Prêter mon véhicule</p>
@@ -13,3 +54,403 @@
     <p>Rentabilisez votre véhicule pendant vos périodes d'absence. Simple et sécurisé.</p>
   </div>
 </div>
+
+<!-- ═══════════════════════ BENEFITS ═══════════════════════ -->
+<section style="background:var(--white);padding:40px 0;border-bottom:1px solid var(--sand)">
+  <div class="container">
+    <div class="grid-3">
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:2rem;margin-bottom:10px">💰</div>
+        <h3 style="font-size:1rem">Gagnez de l'argent</h3>
+        <p style="font-size:0.85rem;color:var(--gray)">Fixez votre propre tarif. Recevez 97% de chaque transaction.</p>
+      </div>
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:2rem;margin-bottom:10px">🛡️</div>
+        <h3 style="font-size:1rem">Protégé et sécurisé</h3>
+        <p style="font-size:0.85rem;color:var(--gray)">Vérification d'identité, contrat en ligne et paiement sécurisé.</p>
+      </div>
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:2rem;margin-bottom:10px">🕐</div>
+        <h3 style="font-size:1rem">Vous contrôlez tout</h3>
+        <p style="font-size:0.85rem;color:var(--gray)">Choisissez vos dates et votre disponibilité à la semaine.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ FORM ═══════════════════════ -->
+<section class="section-pad">
+  <div class="container">
+    <div style="max-width:760px;margin:0 auto">
+
+      <!-- Must be logged in -->
+      <div id="login-required" class="form-section text-center" style="display:none">
+        <div style="font-size:3rem;margin-bottom:16px">🔐</div>
+        <h2 style="margin-bottom:12px">Connexion requise</h2>
+        <p style="color:var(--gray);margin-bottom:24px">Vous devez être connecté pour ajouter une annonce.</p>
+        <button class="btn btn-primary btn-lg" onclick="openModal('auth-modal')">Se connecter / S'inscrire</button>
+      </div>
+
+      <div id="lend-form-wrap" style="display:none">
+        <div class="form-section">
+          <h2 class="form-title">Informations du véhicule</h2>
+
+          <!-- Type Selector -->
+          <div class="form-group">
+            <label class="form-label">Type de véhicule <span class="required">*</span></label>
+            <div class="type-selector" id="type-selector">
+              <div class="type-option" data-val="car" onclick="selectType(this)">
+                <div class="type-opt-icon">🚗</div><div class="type-opt-label">Voiture</div>
+              </div>
+              <div class="type-option" data-val="motorcycle" onclick="selectType(this)">
+                <div class="type-opt-icon">🏍️</div><div class="type-opt-label">Moto</div>
+              </div>
+              <div class="type-option" data-val="scooter" onclick="selectType(this)">
+                <div class="type-opt-icon">🛵</div><div class="type-opt-label">Scooter</div>
+              </div>
+              <div class="type-option" data-val="bike" onclick="selectType(this)">
+                <div class="type-opt-icon">🚲</div><div class="type-opt-label">Vélo</div>
+              </div>
+            </div>
+            <input type="hidden" id="lend-type" name="type">
+            <span class="form-error" id="type-error"></span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="lend-brand">Marque <span class="required">*</span></label>
+              <input type="text" id="lend-brand" class="form-control" placeholder="Ex: Volkswagen, Yamaha…">
+              <span class="form-error"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="lend-model">Modèle <span class="required">*</span></label>
+              <input type="text" id="lend-model" class="form-control" placeholder="Ex: Golf 7, MT-07…">
+              <span class="form-error"></span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="lend-year">Année <span class="required">*</span></label>
+              <input type="number" id="lend-year" class="form-control" placeholder="Ex: 2020" min="1990" max="2025">
+              <span class="form-error"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="lend-city">Ville <span class="required">*</span></label>
+              <select id="lend-city" class="form-control">
+                <option value="">-- Sélectionnez --</option>
+                <option>Tunis</option><option>Sfax</option><option>Sousse</option><option>Monastir</option>
+                <option>Bizerte</option><option>Hammamet</option><option>Nabeul</option><option>Gafsa</option>
+                <option>Kairouan</option><option>Gabès</option><option>Kasserine</option><option>Jendouba</option>
+                <option>Mahdia</option><option>Tozeur</option><option>Djerba</option><option>Ben Arous</option>
+                <option>Ariana</option><option>La Marsa</option><option>Sidi Bouzid</option><option>Médenine</option>
+                <option>Zaghouan</option><option>Manouba</option><option>Beja</option><option>Kef</option>
+              </select>
+              <span class="form-error"></span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="lend-desc">Description <span class="required">*</span></label>
+            <textarea id="lend-desc" class="form-control" rows="4" placeholder="Décrivez l'état du véhicule, les équipements inclus (GPS, casque…), les conditions d'utilisation…"></textarea>
+            <span class="form-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Photo du véhicule</label>
+            <div class="upload-area" id="upload-area" onclick="document.getElementById('lend-photo').click()"
+                 ondragover="event.preventDefault();this.classList.add('dragover')"
+                 ondragleave="this.classList.remove('dragover')"
+                 ondrop="handleDrop(event)">
+              <div id="upload-placeholder">
+                <div style="font-size:2rem;margin-bottom:8px">📷</div>
+                <p style="font-weight:600;font-size:0.9rem">Cliquez ou glissez une photo ici</p>
+                <p style="font-size:0.78rem;color:var(--gray)">JPG, PNG, WEBP — Max 5MB</p>
+              </div>
+              <img id="upload-preview" class="upload-preview" style="display:none">
+            </div>
+            <input type="file" id="lend-photo" name="photo" accept="image/*" style="display:none" onchange="previewPhoto(this)">
+          </div>
+
+          <hr style="border:none;border-top:1px solid var(--sand);margin:28px 0">
+          <h2 class="form-title">Disponibilité & Tarif</h2>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="lend-from">Disponible à partir du <span class="required">*</span></label>
+              <input type="date" id="lend-from" class="form-control">
+              <span class="form-error"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="lend-to">Disponible jusqu'au <span class="required">*</span></label>
+              <input type="date" id="lend-to" class="form-control">
+              <span class="form-error"></span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="lend-price">Prix par jour (DT) <span class="required">*</span></label>
+            <input type="number" id="lend-price" class="form-control" placeholder="Ex: 75" min="1" step="0.5" oninput="updateEarnings()">
+            <span class="form-error"></span>
+            <div class="form-hint" id="earnings-hint"></div>
+          </div>
+
+          <div style="background:var(--cream);border:1px solid var(--sand);border-radius:var(--radius-sm);padding:16px;font-size:0.82rem;color:var(--gray);margin-bottom:24px">
+            <strong style="color:var(--charcoal)">ℹ️ Comment ça marche ?</strong><br>
+            Roulez.tn prélève <strong style="color:var(--red)">3%</strong> de commission sur chaque transaction. Le reste (97%) vous revient directement.
+          </div>
+
+          <button class="btn btn-primary btn-lg btn-block" id="lend-submit-btn" onclick="submitLend()">
+            📤 Publier mon annonce
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-logo">Roulez<em>.tn</em></div>
+        <p class="footer-desc">La première plateforme tunisienne de location de véhicules entre particuliers.</p>
+      </div>
+      <div>
+        <div class="footer-heading">Navigation</div>
+        <ul class="footer-links">
+          <li><a href="browser.html">Emprunter un véhicule</a></li>
+          <li><a href="lend.html">Prêter mon véhicule</a></li>
+          <li><a href="detail.html">Comment ça marche</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-heading">Légal</div>
+        <ul class="footer-links">
+          <li><a href="#">Conditions d'utilisation</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Roulez.tn</span>
+      <span class="tunisia-flag">
+        <span class="flag-bar flag-red"></span><span class="flag-bar flag-white"></span><span class="flag-bar flag-red"></span>
+        Fait avec ❤️ en Tunisie
+      </span>
+    </div>
+  </div>
+</footer>
+
+<!-- AUTH MODAL -->
+<div id="auth-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Mon Compte</h3>
+      <button class="modal-close" onclick="closeModal('auth-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-tab="login">Se connecter</div>
+        <div class="auth-tab" data-tab="register">S'inscrire</div>
+      </div>
+      <div id="login-panel" class="auth-panel">
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email <span class="required">*</span></label>
+            <input type="email" id="login-email" name="email" class="form-control" placeholder="votre@email.com">
+            <span class="form-error"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-password">Mot de passe <span class="required">*</span></label>
+            <input type="password" id="login-password" name="password" class="form-control" placeholder="••••••••">
+            <span class="form-error"></span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Se connecter</button>
+        </form>
+      </div>
+      <div id="register-panel" class="auth-panel hidden">
+        <form id="register-form" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="reg-name">Nom complet <span class="required">*</span></label>
+              <input type="text" id="reg-name" name="full_name" class="form-control" placeholder="Ahmed Ben Salah">
+              <span class="form-error"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-cin">CIN <span class="required">*</span></label>
+              <input type="text" id="reg-cin" name="cin" class="form-control" placeholder="08123456">
+              <span class="form-error"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-email">Email <span class="required">*</span></label>
+            <input type="email" id="reg-email" name="email" class="form-control" placeholder="votre@email.com">
+            <span class="form-error"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-phone">Téléphone <span class="required">*</span></label>
+            <input type="tel" id="reg-phone" name="phone" class="form-control" placeholder="+216 XX XXX XXX">
+            <span class="form-error"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-password">Mot de passe <span class="required">*</span></label>
+            <input type="password" id="reg-password" name="password" class="form-control" placeholder="Minimum 6 caractères">
+            <span class="form-error"></span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">S'inscrire gratuitement</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="main.js"></script>
+<script>
+  // Show/hide form based on login state after checkAuthState resolves
+  const origUpdateNav = window.updateNavUI || function(){};
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Poll until auth state is known
+    const timer = setInterval(() => {
+      const loginBtn = document.getElementById('nav-login-btn');
+      if (!loginBtn) return;
+      if (currentUser) {
+        showForm();
+      } else {
+        // Wait for auth check
+        setTimeout(() => {
+          if (!currentUser) showLoginRequired();
+          else showForm();
+          clearInterval(timer);
+        }, 800);
+        clearInterval(timer);
+      }
+    }, 100);
+  });
+
+  function showForm() {
+    document.getElementById('login-required').style.display = 'none';
+    document.getElementById('lend-form-wrap').style.display  = 'block';
+  }
+  function showLoginRequired() {
+    document.getElementById('login-required').style.display = 'block';
+    document.getElementById('lend-form-wrap').style.display  = 'none';
+  }
+
+  let selectedType = '';
+
+  function selectType(el) {
+    document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedType = el.dataset.val;
+    document.getElementById('lend-type').value = selectedType;
+    document.getElementById('type-error').classList.remove('visible');
+  }
+
+  function previewPhoto(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('upload-placeholder').style.display = 'none';
+      const preview = document.getElementById('upload-preview');
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('upload-area').classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const input = document.getElementById('lend-photo');
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      previewPhoto(input);
+    }
+  }
+
+  function updateEarnings() {
+    const price = parseFloat(document.getElementById('lend-price').value);
+    const hint  = document.getElementById('earnings-hint');
+    if (!price || price <= 0) { hint.textContent = ''; return; }
+    const earnings = (price * 0.97).toFixed(2);
+    hint.textContent = `✅ Vous recevrez ${earnings} DT par jour (après commission de 3%).`;
+  }
+
+  function submitLend() {
+    if (!currentUser) { openModal('auth-modal'); return; }
+
+    // Validate type
+    let valid = true;
+    if (!selectedType) {
+      document.getElementById('type-error').textContent = 'Veuillez choisir un type de véhicule.';
+      document.getElementById('type-error').classList.add('visible');
+      valid = false;
+    }
+
+    // Validate fields
+    const fields = [
+      { id: 'lend-brand', rules: { required: true } },
+      { id: 'lend-model', rules: { required: true } },
+      { id: 'lend-year',  rules: { required: true, min: 1990 } },
+      { id: 'lend-city',  rules: { required: true } },
+      { id: 'lend-desc',  rules: { required: true, minLength: 20 } },
+      { id: 'lend-from',  rules: { required: true } },
+      { id: 'lend-to',    rules: { required: true } },
+      { id: 'lend-price', rules: { required: true, min: 1 } },
+    ];
+    fields.forEach(f => {
+      const el = document.getElementById(f.id);
+      if (el) valid = validateField(el, f.rules) && valid;
+    });
+
+    const from = document.getElementById('lend-from').value;
+    const to   = document.getElementById('lend-to').value;
+    if (from && to && from >= to) {
+      document.querySelector('#lend-to + .form-error').textContent = 'La date de fin doit être après la date de début.';
+      document.querySelector('#lend-to + .form-error').classList.add('visible');
+      valid = false;
+    }
+    if (!valid) { showToast('Veuillez corriger les erreurs dans le formulaire.', 'error'); return; }
+
+    const btn = document.getElementById('lend-submit-btn');
+    btn.innerHTML = '<span class="spinner"></span> Publication en cours…';
+    btn.disabled  = true;
+
+    const formData = new FormData();
+    formData.append('action',        'add');
+    formData.append('type',          selectedType);
+    formData.append('brand',         document.getElementById('lend-brand').value);
+    formData.append('model',         document.getElementById('lend-model').value);
+    formData.append('year',          document.getElementById('lend-year').value);
+    formData.append('city',          document.getElementById('lend-city').value);
+    formData.append('description',   document.getElementById('lend-desc').value);
+    formData.append('available_from',document.getElementById('lend-from').value);
+    formData.append('available_to',  document.getElementById('lend-to').value);
+    formData.append('price_per_day', document.getElementById('lend-price').value);
+    const photoFile = document.getElementById('lend-photo').files[0];
+    if (photoFile) formData.append('photo', photoFile);
+
+    fetch('php/machines.php', { method: 'POST', body: formData })
+      .then(r => r.json())
+      .then(data => {
+        btn.innerHTML = '📤 Publier mon annonce';
+        btn.disabled  = false;
+        if (data.success) {
+          showToast(data.message, 'success');
+          setTimeout(() => window.location.href = `detail.html?id=${data.id}`, 1200);
+        } else {
+          showToast(data.message || 'Erreur lors de la publication.', 'error');
+        }
+      })
+      .catch(() => { btn.innerHTML = '📤 Publier mon annonce'; btn.disabled = false; showToast('Erreur réseau.', 'error'); });
+  }
+</script>
+</body>
+</html>

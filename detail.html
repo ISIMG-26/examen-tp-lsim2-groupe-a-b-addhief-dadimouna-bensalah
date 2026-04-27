@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Détail du véhicule — Roulez.tn</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .detail-layout { display: grid; grid-template-columns: 1fr 400px; gap: 40px; align-items: start; }
+    .booking-card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: 28px; position: sticky; top: 90px; }
+    .price-hero { text-align: center; padding: 20px 0; border-bottom: 1px solid var(--sand); margin-bottom: 20px; }
+    .price-hero .price { font-family: 'Playfair Display',serif; font-size: 2.4rem; color: var(--red); font-weight: 700; }
+    .price-hero .per { font-size: 0.85rem; color: var(--gray); }
+    .section-divider { font-weight: 700; font-size: 1rem; margin: 24px 0 14px; padding-bottom: 8px; border-bottom: 2px solid var(--sand); }
+    @media(max-width:900px){ .detail-layout { grid-template-columns: 1fr; } .booking-card { position: static; } }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">Roulez<span>.tn</span></a>
+    <div class="nav-links">
+      <a href="browser.html">🔍 Emprunter un véhicule</a>
+      <a href="lend.html">➕ Prêter mon véhicule</a>
+      <a href="detail.html">❓ Comment ça marche</a>
+    </div>
+    <div class="nav-right">
+      <span id="nav-user-name" style="display:none"></span>
+      <button id="nav-login-btn" class="btn btn-primary btn-sm" onclick="openModal('auth-modal')">Connexion</button>
+      <button id="nav-logout-btn" class="btn btn-ghost btn-sm" style="display:none" onclick="logout()">Déconnexion</button>
+      <button class="nav-mobile-toggle">☰</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════ PAGE HEADER ═══════════════════════ -->
+<div class="page-header">
+  <div class="container">
+    <p class="breadcrumb"><a href="index.html">Accueil</a> / <a href="browse.html">Annonces</a> / <span id="breadcrumb-title">Détail</span></p>
+    <h1 id="page-title">Chargement…</h1>
+  </div>
+</div>
+
+<!-- ═══════════════════════ MAIN ═══════════════════════ -->
+<section class="section-pad">
+  <div class="container">
+    <div id="loading-state" class="loading-overlay">
+      <div class="spinner"></div> Chargement du véhicule…
+    </div>
+    <div id="detail-layout" class="detail-layout" style="display:none">
+
+      <!-- Left: Machine Info -->
+      <div>
+        <div class="detail-img" id="detail-img">
+          <div class="placeholder-icon" id="detail-img-placeholder"></div>
+        </div>
+
+        <div style="margin-top:28px">
+          <h2 class="section-divider">Description</h2>
+          <p id="detail-description" style="color:var(--gray);line-height:1.8"></p>
+
+          <h2 class="section-divider">Caractéristiques</h2>
+          <div class="spec-grid">
+            <div class="spec-item"><div class="spec-label">Type</div><div class="spec-value" id="spec-type">—</div></div>
+            <div class="spec-item"><div class="spec-label">Marque</div><div class="spec-value" id="spec-brand">—</div></div>
+            <div class="spec-item"><div class="spec-label">Modèle</div><div class="spec-value" id="spec-model">—</div></div>
+            <div class="spec-item"><div class="spec-label">Année</div><div class="spec-value" id="spec-year">—</div></div>
+            <div class="spec-item"><div class="spec-label">Ville</div><div class="spec-value" id="spec-city">—</div></div>
+            <div class="spec-item"><div class="spec-label">Prix/jour</div><div class="spec-value" id="spec-price">—</div></div>
+            <div class="spec-item"><div class="spec-label">Disponible du</div><div class="spec-value" id="spec-from">—</div></div>
+            <div class="spec-item"><div class="spec-label">Disponible jusqu'au</div><div class="spec-value" id="spec-to">—</div></div>
+          </div>
+
+          <h2 class="section-divider">Propriétaire</h2>
+          <div style="display:flex;align-items:center;gap:16px">
+            <div style="width:52px;height:52px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.2rem" id="owner-avatar">?</div>
+            <div>
+              <div style="font-weight:700" id="owner-name">—</div>
+              <div style="font-size:0.85rem;color:var(--gray)" id="owner-phone">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Booking Form -->
+      <div class="booking-card">
+        <div class="price-hero">
+          <div class="price" id="booking-price">— DT</div>
+          <div class="per">par jour</div>
+        </div>
+
+        <!-- Step 1: Dates -->
+        <div id="step-dates">
+          <h3 style="margin-bottom:16px">📅 Choisissez vos dates</h3>
+          <div class="form-group">
+            <label class="form-label">Date de début <span class="required">*</span></label>
+            <input type="date" id="book-start" class="form-control" onchange="calcPrice()">
+            <span class="form-error"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date de fin <span class="required">*</span></label>
+            <input type="date" id="book-end" class="form-control" onchange="calcPrice()">
+            <span class="form-error"></span>
+          </div>
+
+          <!-- Dynamic Summary -->
+          <div id="booking-summary" class="booking-summary" style="display:none">
+            <div class="summary-row"><span>Prix/jour</span><span id="sum-ppd">—</span></div>
+            <div class="summary-row"><span>Nombre de jours</span><span id="sum-days">—</span></div>
+            <div class="summary-row"><span>Sous-total</span><span id="sum-sub">—</span></div>
+            <div class="summary-row fee"><span>Commission Roulez.tn (3%)</span><span id="sum-fee">—</span></div>
+            <div class="summary-row total"><span>Total</span><span id="sum-total">—</span></div>
+          </div>
+
+          <button class="btn btn-primary btn-block" onclick="goToPayment()">Continuer vers le paiement →</button>
+          <p style="font-size:0.75rem;color:var(--gray);text-align:center;margin-top:10px">Vous ne serez débité qu'après confirmation.</p>
+        </div>
+
+        <!-- Step 2: Payment -->
+        <div id="step-payment" style="display:none">
+          <h3 style="margin-bottom:16px">💳 Informations de paiement</h3>
+
+          <!-- Visual Card -->
+          <div class="card-input-visual">
+            <div style="font-size:0.7rem;opacity:0.6;letter-spacing:2px">CARTE BANCAIRE</div>
+            <div class="card-num-display" id="card-num-display">#### #### #### ####</div>
+            <div class="card-meta">
+              <div><div style="font-size:0.6rem;margin-bottom:2px">TITULAIRE</div><span id="card-name-display">VOTRE NOM</span></div>
+              <div><div style="font-size:0.6rem;margin-bottom:2px">EXPIRE</div><span id="card-exp-display">MM/AA</span></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nom sur la carte <span class="required">*</span></label>
+            <input type="text" id="card-name" class="form-control" placeholder="Ahmed Ben Salah">
+            <span class="form-error"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Numéro de carte <span class="required">*</span></label>
+            <input type="text" id="card-number" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19">
+            <span class="form-error"></span>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Expiration <span class="required">*</span></label>
+              <input type="text" id="card-expiry" class="form-control" placeholder="MM/AA" maxlength="5">
+              <span class="form-error"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">CVV <span class="required">*</span></label>
+              <input type="text" id="card-cvv" class="form-control" placeholder="123" maxlength="4">
+              <span class="form-error"></span>
+            </div>
+          </div>
+
+          <!-- Contract terms -->
+          <div style="background:var(--cream);border:1px solid var(--sand);border-radius:var(--radius-sm);padding:14px;font-size:0.78rem;color:var(--gray);margin-bottom:16px">
+            <strong style="color:var(--charcoal)">📋 Contrat de location</strong><br>
+            En confirmant, vous acceptez les conditions générales de Roulez.tn et vous engagez à restituer le véhicule dans son état initial. La commission de 3% est non remboursable.
+          </div>
+
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="accept-terms"> 
+              <span style="font-size:0.85rem">J'accepte les conditions du contrat <span class="required">*</span></span>
+            </label>
+            <span class="form-error" id="terms-error"></span>
+          </div>
+
+          <button class="btn btn-primary btn-block" id="confirm-btn" onclick="confirmBooking()">✅ Confirmer et payer</button>
+          <button class="btn btn-ghost btn-block" style="margin-top:8px" onclick="backToDates()">← Retour</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="error-state" class="empty-state" style="display:none">
+      <div class="empty-icon">⚠️</div>
+      <h3>Véhicule introuvable</h3>
+      <p><a href="browse.html" class="btn btn-primary" style="margin-top:16px">← Retour aux annonces</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-logo">Roulez<em>.tn</em></div>
+        <p class="footer-desc">La première plateforme tunisienne de location de véhicules entre particuliers.</p>
+      </div>
+      <div>
+        <div class="footer-heading">Navigation</div>
+        <ul class="footer-links">
+          <li><a href="browser.html">Emprunter un véhicule</a></li>
+          <li><a href="lend.html">Prêter mon véhicule</a></li>
+          <li><a href="detail.html">Comment ça marche</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-heading">Légal</div>
+        <ul class="footer-links">
+          <li><a href="#">Conditions d'utilisation</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Roulez.tn</span>
+      <span class="tunisia-flag">
+        <span class="flag-bar flag-red"></span><span class="flag-bar flag-white"></span><span class="flag-bar flag-red"></span>
+        Fait avec ❤️ en Tunisie
+      </span>
+    </div>
+  </div>
+</footer>
+
+<!-- SUCCESS MODAL -->
+<div id="success-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-body" style="text-align:center;padding:40px">
+      <div style="font-size:4rem;margin-bottom:16px">🎉</div>
+      <h2 style="color:var(--red);margin-bottom:12px">Réservation Confirmée!</h2>
+      <p style="color:var(--gray);margin-bottom:24px" id="success-details"></p>
+      <div style="background:var(--cream);border-radius:var(--radius-sm);padding:16px;margin-bottom:24px" id="success-summary"></div>
+      <a href="browse.html" class="btn btn-primary">Explorer d'autres véhicules</a>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="auth-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Connexion requise</h3>
+      <button class="modal-close" onclick="closeModal('auth-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-tab="login">Se connecter</div>
+        <div class="auth-tab" data-tab="register">S'inscrire</div>
+      </div>
+      <div id="login-panel" class="auth-panel">
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email <span class="required">*</span></label>
+            <input type="email" id="login-email" name="email" class="form-control" placeholder="votre@email.com">
+            <span class="form-error"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-password">Mot de passe <span class="required">*</span></label>
+            <input type="password" id="login-password" name="password" class="form-control" placeholder="••••••••">
+            <span class="form-error"></span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Se connecter</button>
+        </form>
+      </div>
+      <div id="register-panel" class="auth-panel hidden">
+        <form id="register-form" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="reg-name">Nom complet <span class="required">*</span></label>
+              <input type="text" id="reg-name" name="full_name" class="form-control" placeholder="Ahmed Ben Salah">
+              <span class="form-error"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-cin">CIN <span class="required">*</span></label>
+              <input type="text" id="reg-cin" name="cin" class="form-control" placeholder="08123456">
+              <span class="form-error"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-email">Email <span class="required">*</span></label>
+            <input type="email" id="reg-email" name="email" class="form-control" placeholder="votre@email.com">
+            <span class="form-error"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-phone">Téléphone <span class="required">*</span></label>
+            <input type="tel" id="reg-phone" name="phone" class="form-control" placeholder="+216 XX XXX XXX">
+            <span class="form-error"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-password">Mot de passe <span class="required">*</span></label>
+            <input type="password" id="reg-password" name="password" class="form-control" placeholder="Minimum 6 caractères">
+            <span class="form-error"></span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">S'inscrire gratuitement</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="main.js"></script>
+<script>
+  const TYPE_LABELS = { car: 'Voiture', bike: 'Vélo', motorcycle: 'Moto', scooter: 'Scooter' };
+  const TYPE_ICONS  = { car: '🚗', bike: '🚲', motorcycle: '🏍️', scooter: '🛵' };
+
+  let machine = null;
+  const machineId = new URLSearchParams(window.location.search).get('id');
+
+  if (!machineId) { showError(); }
+  else { loadMachine(); }
+
+  function showError() {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('error-state').style.display   = 'block';
+  }
+
+  function loadMachine() {
+    fetch(`php/machines.php?action=detail&id=${machineId}`)
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('loading-state').style.display = 'none';
+        if (!data.success) { showError(); return; }
+        machine = data.machine;
+        renderDetail();
+      })
+      .catch(showError);
+  }
+
+  function renderDetail() {
+    const m = machine;
+    const label = TYPE_LABELS[m.type] || m.type;
+    const icon  = TYPE_ICONS[m.type] || '🚗';
+
+    document.title = `${m.brand} ${m.model} — Roulez.tn`;
+    document.getElementById('page-title').textContent = `${m.brand} ${m.model} (${m.year})`;
+    document.getElementById('breadcrumb-title').textContent = `${m.brand} ${m.model}`;
+
+    // Image
+    const imgEl = document.getElementById('detail-img');
+    if (m.photo) {
+      imgEl.innerHTML = `<img src="uploads/${m.photo}" alt="${m.brand} ${m.model}">`;
+    } else {
+      document.getElementById('detail-img-placeholder').textContent = icon;
+    }
+
+    document.getElementById('detail-description').textContent = m.description || 'Aucune description fournie.';
+    document.getElementById('spec-type').textContent  = label;
+    document.getElementById('spec-brand').textContent = m.brand;
+    document.getElementById('spec-model').textContent = m.model;
+    document.getElementById('spec-year').textContent  = m.year;
+    document.getElementById('spec-city').textContent  = m.city;
+    document.getElementById('spec-price').textContent = parseFloat(m.price_per_day).toFixed(2) + ' DT';
+    document.getElementById('spec-from').textContent  = new Date(m.available_from).toLocaleDateString('fr-FR');
+    document.getElementById('spec-to').textContent    = new Date(m.available_to).toLocaleDateString('fr-FR');
+    document.getElementById('owner-name').textContent  = m.owner_name;
+    document.getElementById('owner-phone').textContent = m.owner_phone;
+    document.getElementById('owner-avatar').textContent = m.owner_name.charAt(0).toUpperCase();
+    document.getElementById('booking-price').textContent = parseFloat(m.price_per_day).toFixed(0) + ' DT';
+
+    // Set min/max dates
+    document.getElementById('book-start').min = m.available_from;
+    document.getElementById('book-start').max = m.available_to;
+    document.getElementById('book-end').min   = m.available_from;
+    document.getElementById('book-end').max   = m.available_to;
+
+    document.getElementById('detail-layout').style.display = 'grid';
+  }
+
+  function calcPrice() {
+    const start = document.getElementById('book-start').value;
+    const end   = document.getElementById('book-end').value;
+    const summary = document.getElementById('booking-summary');
+
+    if (!start || !end || !machine) { summary.style.display = 'none'; return; }
+    const d1   = new Date(start);
+    const d2   = new Date(end);
+    const days = Math.round((d2 - d1) / 86400000);
+    if (days < 1) { summary.style.display = 'none'; return; }
+
+    const ppd      = parseFloat(machine.price_per_day);
+    const subtotal = ppd * days;
+    const fee      = Math.round(subtotal * 0.03 * 100) / 100;
+    const total    = subtotal + fee;
+
+    document.getElementById('sum-ppd').textContent   = ppd.toFixed(2) + ' DT';
+    document.getElementById('sum-days').textContent  = days + ' jour(s)';
+    document.getElementById('sum-sub').textContent   = subtotal.toFixed(2) + ' DT';
+    document.getElementById('sum-fee').textContent   = fee.toFixed(2) + ' DT';
+    document.getElementById('sum-total').textContent = total.toFixed(2) + ' DT';
+    summary.style.display = 'block';
+  }
+
+  function goToPayment() {
+    if (!currentUser) {
+      showToast('Veuillez vous connecter pour réserver.', 'info');
+      openModal('auth-modal');
+      return;
+    }
+    const start = document.getElementById('book-start').value;
+    const end   = document.getElementById('book-end').value;
+    let valid   = true;
+
+    if (!start) {
+      document.querySelector('#book-start + .form-error').textContent = 'Date de début requise.';
+      document.querySelector('#book-start + .form-error').classList.add('visible');
+      valid = false;
+    }
+    if (!end) {
+      document.querySelector('#book-end + .form-error').textContent = 'Date de fin requise.';
+      document.querySelector('#book-end + .form-error').classList.add('visible');
+      valid = false;
+    }
+    if (start && end && start >= end) {
+      document.querySelector('#book-end + .form-error').textContent = 'La date de fin doit être après la date de début.';
+      document.querySelector('#book-end + .form-error').classList.add('visible');
+      valid = false;
+    }
+    if (!valid) return;
+
+    document.getElementById('step-dates').style.display   = 'none';
+    document.getElementById('step-payment').style.display = 'block';
+  }
+
+  function backToDates() {
+    document.getElementById('step-payment').style.display = 'none';
+    document.getElementById('step-dates').style.display   = 'block';
+  }
+
+  // Update card expiry display
+  document.addEventListener('DOMContentLoaded', () => {
+    const expInput = document.getElementById('card-expiry');
+    if (expInput) {
+      expInput.addEventListener('input', function() {
+        const display = document.getElementById('card-exp-display');
+        if (display) display.textContent = this.value || 'MM/AA';
+      });
+    }
+  });
+
+  function confirmBooking() {
+    const cardName   = document.getElementById('card-name');
+    const cardNumber = document.getElementById('card-number');
+    const cardExpiry = document.getElementById('card-expiry');
+    const cardCvv    = document.getElementById('card-cvv');
+    const terms      = document.getElementById('accept-terms');
+
+    let valid = true;
+    valid = validateField(cardName,   { required: true }) && valid;
+    valid = validateField(cardNumber, { required: true }) && valid;
+    valid = validateField(cardExpiry, { required: true }) && valid;
+    valid = validateField(cardCvv,    { required: true }) && valid;
+
+    if (!terms.checked) {
+      document.getElementById('terms-error').textContent = 'Vous devez accepter les conditions.';
+      document.getElementById('terms-error').classList.add('visible');
+      valid = false;
+    } else {
+      document.getElementById('terms-error').classList.remove('visible');
+    }
+    if (!valid) return;
+
+    const btn = document.getElementById('confirm-btn');
+    btn.innerHTML = '<span class="spinner"></span> Traitement en cours…';
+    btn.disabled  = true;
+
+    const formData = new FormData();
+    formData.append('action', 'book');
+    formData.append('machine_id',   machineId);
+    formData.append('start_date',   document.getElementById('book-start').value);
+    formData.append('end_date',     document.getElementById('book-end').value);
+    formData.append('card_name',    cardName.value);
+    formData.append('card_number',  cardNumber.value.replace(/\s/g,''));
+    formData.append('card_expiry',  cardExpiry.value);
+    formData.append('card_cvv',     cardCvv.value);
+
+    fetch('php/bookings.php', { method: 'POST', body: formData })
+      .then(r => r.json())
+      .then(data => {
+        btn.innerHTML = '✅ Confirmer et payer';
+        btn.disabled  = false;
+        if (data.success) {
+          document.getElementById('success-details').textContent =
+            `Votre réservation #${data.booking_id} a été confirmée. Un récapitulatif vous sera envoyé.`;
+          document.getElementById('success-summary').innerHTML = `
+            <div class="summary-row"><span>Durée</span><span>${data.total_days} jour(s)</span></div>
+            <div class="summary-row"><span>Sous-total</span><span>${parseFloat(data.subtotal).toFixed(2)} DT</span></div>
+            <div class="summary-row fee"><span>Commission (3%)</span><span>${parseFloat(data.platform_fee).toFixed(2)} DT</span></div>
+            <div class="summary-row total"><span><strong>Total débité</strong></span><span><strong>${parseFloat(data.total_amount).toFixed(2)} DT</strong></span></div>
+            <div style="font-size:0.78rem;color:var(--gray);margin-top:8px">Carte se terminant par ****${data.card_last4}</div>
+          `;
+          openModal('success-modal');
+        } else {
+          showToast(data.message || 'Erreur lors de la réservation.', 'error');
+        }
+      })
+      .catch(() => { btn.innerHTML = '✅ Confirmer et payer'; btn.disabled = false; showToast('Erreur réseau.', 'error'); });
+  }
+</script>
+</body>
+</html>
