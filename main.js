@@ -1,4 +1,7 @@
-
+// ============================================
+// ROULEZ.TN - Main JavaScript
+// Native JS — No frameworks
+// ============================================
 
 /* ── Toast Notifications ── */
 function showToast(message, type = 'info', duration = 3500) {
@@ -21,7 +24,7 @@ function showToast(message, type = 'info', duration = 3500) {
 let currentUser = null;
 
 function checkAuthState() {
-  fetch('php/auth.php?action=status')
+  fetch('auth.php?action=status')
     .then(r => r.json())
     .then(data => {
       currentUser = data.logged_in ? data.user : null;
@@ -47,7 +50,7 @@ function updateNavUI() {
 }
 
 function logout() {
-  fetch('php/auth.php', { method: 'POST', body: new URLSearchParams({ action: 'logout' }) })
+  fetch('auth.php', { method: 'POST', body: new URLSearchParams({ action: 'logout' }) })
     .then(r => r.json())
     .then(data => {
       currentUser = null;
@@ -165,7 +168,7 @@ function setupAuthForms() {
       formData.append('email', email.value);
       formData.append('password', password.value);
 
-      fetch('php/auth.php', { method: 'POST', body: formData })
+      fetch('auth.php', { method: 'POST', body: formData })
         .then(r => r.json())
         .then(data => {
           btn.innerHTML = 'Se connecter';
@@ -209,7 +212,7 @@ function setupAuthForms() {
       const formData = new FormData(this);
       formData.append('action', 'register');
 
-      fetch('php/auth.php', { method: 'POST', body: formData })
+      fetch('auth.php', { method: 'POST', body: formData })
         .then(r => r.json())
         .then(data => {
           btn.innerHTML = "S'inscrire";
