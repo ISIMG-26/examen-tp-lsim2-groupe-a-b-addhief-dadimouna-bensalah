@@ -1,4 +1,7 @@
 <?php
+// ============================================
+// ROULEZ.TN - Machines Handler
+// ============================================
 require_once 'config.php';
 header('Content-Type: application/json');
 
@@ -143,7 +146,7 @@ function addMachine() {
             return;
         }
         $filename = 'machine_' . time() . '_' . rand(1000, 9999) . '.' . $ext;
-        $dest     = '../uploads/' . $filename;
+        $dest     = 'uploads/' . $filename;
         if (move_uploaded_file($_FILES['photo']['tmp_name'], $dest)) {
             $photo = $filename;
         }
@@ -151,12 +154,7 @@ function addMachine() {
 
     $db   = getDB();
     $stmt = $db->prepare("INSERT INTO machines (owner_id, type, brand, model, year, description, photo, price_per_day, available_from, available_to, city) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param('isssisdss s', $owner_id, $type, $brand, $model, $year, $description, $photo, $price_per_day, $available_from, $available_to, $city);
-
-    // Fix binding
-    $stmt->close();
-    $stmt = $db->prepare("INSERT INTO machines (owner_id, type, brand, model, year, description, photo, price_per_day, available_from, available_to, city) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param('isssisdsss', $owner_id, $type, $brand, $model, $year, $description, $photo, $price_per_day, $available_from, $available_to, $city);
+    $stmt->bind_param('isssissdsss', $owner_id, $type, $brand, $model, $year, $description, $photo, $price_per_day, $available_from, $available_to, $city);
 
     if ($stmt->execute()) {
         echo json_encode(['success' => true, 'message' => 'Votre machine a été ajoutée avec succès!', 'id' => $db->insert_id]);
