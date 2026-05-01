@@ -17,7 +17,7 @@
 </head>
 <body>
 
-<!-- NAV -->
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
 <nav>
   <div class="nav-inner">
     <a href="index.html" class="nav-logo">Roulez<span>.tn</span></a>
@@ -35,15 +35,15 @@
   </div>
 </nav>
 
-<!--  PAGE HEADER  -->
+<!-- ═══════════════════════ PAGE HEADER ═══════════════════════ -->
 <div class="page-header">
   <div class="container">
-    <p class="breadcrumb"><a href="index.html">Accueil</a> / <a href="browse.html">Annonces</a> / <span id="breadcrumb-title">Détail</span></p>
+    <p class="breadcrumb"><a href="index.html">Accueil</a> / <a href="browser.html">Annonces</a> / <span id="breadcrumb-title">Détail</span></p>
     <h1 id="page-title">Chargement…</h1>
   </div>
 </div>
 
-<!--  MAIN  -->
+<!-- ═══════════════════════ MAIN ═══════════════════════ -->
 <section class="section-pad">
   <div class="container">
     <div id="loading-state" class="loading-overlay">
@@ -175,6 +175,8 @@
       </div>
     </div>
 
+    <div id="detail-debug" style="display:none; background: #fff4f0; color: #b33; border: 1px solid #f5c2b4; border-radius: 12px; padding: 16px; margin-top: 24px; text-align:center;"></div>
+
     <div id="error-state" class="empty-state" style="display:none">
       <div class="empty-icon">⚠️</div>
       <h3>Véhicule introuvable</h3>
@@ -183,7 +185,7 @@
   </div>
 </section>
 
-<!--  FOOTER  -->
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
 <footer>
   <div class="container">
     <div class="footer-grid">
@@ -301,24 +303,54 @@
   let machine = null;
   const machineId = new URLSearchParams(window.location.search).get('id');
 
-  if (!machineId) { showError(); }
-  else { loadMachine(); }
-
-  function showError() {
-    document.getElementById('loading-state').style.display = 'none';
-    document.getElementById('error-state').style.display   = 'block';
+  function initDetailPage() {
+    if (!machineId) {
+      showError('ID du véhicule manquant dans l\'URL.');
+    } else {
+      loadMachine();
+    }
   }
 
+  function showError(message = 'Erreur lors du chargement du véhicule.') {
+    const loading = document.getElementById('loading-state');
+    const errorState = document.getElementById('error-state');
+    const debugInfo = document.getElementById('detail-debug');
+    if (loading) loading.style.display = 'none';
+    if (errorState) errorState.style.display = 'block';
+    if (debugInfo) {
+      debugInfo.style.display = 'block';
+      debugInfo.textContent = message;
+    }
+  }
+
+  window.addEventListener('error', function(event) {
+    showError(event.message || 'Erreur JavaScript inconnue.');
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    showError(event.reason ? event.reason.toString() : 'Erreur non gérée.');
+  });
+
+  document.addEventListener('DOMContentLoaded', initDetailPage);
+  if (document.readyState !== 'loading') initDetailPage();
+
   function loadMachine() {
-    fetch(`php/machines.php?action=detail&id=${machineId}`)
-      .then(r => r.json())
+    const url = `machines.php?action=detail&id=${encodeURIComponent(machineId)}`;
+    fetch(url)
+      .then(r => {
+        if (!r.ok) throw new Error('Erreur réseau');
+        return r.json();
+      })
       .then(data => {
         document.getElementById('loading-state').style.display = 'none';
-        if (!data.success) { showError(); return; }
+        if (!data.success) { showError(data.message || 'Véhicule introuvable.'); return; }
         machine = data.machine;
         renderDetail();
       })
-      .catch(showError);
+      .catch(e => {
+        console.error('Erreur lors du chargement:', e);
+        showError(e.message || 'Erreur lors du chargement du véhicule.');
+      });
   }
 
   function renderDetail() {
@@ -468,7 +500,7 @@
     formData.append('card_expiry',  cardExpiry.value);
     formData.append('card_cvv',     cardCvv.value);
 
-    fetch('php/bookings.php', { method: 'POST', body: formData })
+    fetch('bookings.php', { method: 'POST', body: formData })
       .then(r => r.json())
       .then(data => {
         btn.innerHTML = '✅ Confirmer et payer';
