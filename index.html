@@ -9,7 +9,7 @@
 </head>
 <body>
 
-<!--NAV-->
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
 <nav>
   <div class="nav-inner">
     <a href="index.html" class="nav-logo">Roulez<span>.tn</span></a>
@@ -29,13 +29,13 @@
   </div>
 </nav>
 
-<!--HERO-->
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
 <section class="hero">
   <div class="container">
     <div class="hero-content">
       <div class="hero-badge">🇹🇳 Plateforme Tunisienne #1</div>
       <h1>Louez un véhicule<br>entre <em>particuliers</em></h1>
-      <p>Voiture, moto, scooter ou vélo — trouvez le véhicule idéal auprès de Tunisiens de confiance.</p>
+      <p>Voiture, moto, scooter ou vélo — trouvez le véhicule idéal auprès de Tunisiens de confiance, au meilleur prix.</p>
       <div class="hero-actions">
         <a href="browser.html" class="btn btn-primary btn-lg">🔍 Parcourir les annonces</a>
         <a href="lend.html" class="btn btn-outline btn-lg" style="color:#fff;border-color:rgba(255,255,255,0.4)">➕ Mettre en location</a>
@@ -49,7 +49,7 @@
   </div>
 </section>
 
-<!--SEARCH -->
+<!-- ═══════════════════════ SEARCH ═══════════════════════ -->
 <section class="search-section">
   <div class="container">
     <div class="search-box">
@@ -67,7 +67,7 @@
   </div>
 </section>
 
-<!--LISTINGS-->
+<!-- ═══════════════════════ LISTINGS ═══════════════════════ -->
 <section class="section-pad">
   <div class="container">
     <div class="results-bar">
@@ -86,7 +86,7 @@
   </div>
 </section>
 
-<!--HOW IT WORKS-->
+<!-- ═══════════════════════ HOW IT WORKS ═══════════════════════ -->
 <section class="section-pad" style="background:var(--white)">
   <div class="container text-center">
     <h2 style="margin-bottom:8px">Comment ça marche ?</h2>
@@ -109,12 +109,12 @@
       </div>
     </div>
     <div style="margin-top:36px">
-      <a href="detail.html" class="btn btn-outline">En savoir plus</a>
+      <a href="browser.html" class="btn btn-outline">Explorer les annonces</a>
     </div>
   </div>
 </section>
 
-<!--FOOTER-->
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
 <footer>
   <div class="container">
     <div class="footer-grid">
@@ -153,7 +153,7 @@
   </div>
 </footer>
 
-<!-- AUTH MODAL -->
+<!-- ═══════════════════════ AUTH MODAL ═══════════════════════ -->
 <div id="auth-modal" class="modal-overlay">
   <div class="modal">
     <div class="modal-header">
@@ -233,7 +233,7 @@
 
   function doSearch() {
     const q = document.getElementById('home-search').value.trim();
-    if (q) window.location.href = `browse.html?q=${encodeURIComponent(q)}`;
+    if (q) window.location.href = `browser.html?q=${encodeURIComponent(q)}`;
     else   loadMachines();
   }
 
@@ -243,20 +243,32 @@
 
   function loadMachines() {
     const grid = document.getElementById('machines-grid');
+    if (!grid) {
+      console.error('Element machines-grid introuvable');
+      return;
+    }
     grid.innerHTML = '<div class="loading-overlay" style="grid-column:1/-1"><div class="spinner"></div> Chargement…</div>';
 
     const params = new URLSearchParams({ action: 'list' });
     if (currentType !== 'all') params.append('type', currentType);
 
-    fetch('php/machines.php?' + params.toString())
-      .then(r => r.json())
+    const url = 'machines.php?' + params.toString();
+    console.log('Fetch URL:', url);
+
+    fetch(url)
+      .then(r => {
+        console.log('Réponse reçue:', r.status);
+        if (!r.ok) throw new Error(`Erreur HTTP ${r.status}`);
+        return r.json();
+      })
       .then(data => {
+        console.log('Données reçues:', data);
         const machines = data.machines || [];
         const shown    = machines.slice(0, 6); // show 6 on homepage
 
         // Update stat counter
-        document.getElementById('stat-machines').textContent = data.count;
-        document.getElementById('results-count').innerHTML = `<strong>${data.count}</strong> annonce(s) trouvée(s)`;
+        document.getElementById('stat-machines').textContent = data.count || 0;
+        document.getElementById('results-count').innerHTML = `<strong>${data.count || 0}</strong> annonce(s) trouvée(s)`;
 
         if (shown.length === 0) {
           grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
@@ -269,16 +281,27 @@
 
         grid.innerHTML = shown.map(renderMachineCard).join('');
       })
-      .catch(() => {
+      .catch(err => {
+        console.error('Erreur lors du fetch:', err);
         grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
           <div class="empty-icon">⚠️</div>
           <h3>Erreur de chargement</h3>
-          <p>Vérifiez que le serveur PHP est actif (XAMPP/WAMP).</p>
+          <p>Détail: ${err.message || 'Vérifiez que le serveur PHP est actif (XAMPP/WAMP).'}</p>
         </div>`;
       });
   }
 
-  loadMachines();
+  // Appel au chargement initial
+  document.addEventListener('DOMContentLoaded', function() {
+    loadMachines();
+  });
+
+  // Fallback si DOMContentLoaded n'a pas été appelé
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadMachines);
+  } else {
+    loadMachines();
+  }
 </script>
 </body>
 </html>
