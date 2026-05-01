@@ -28,7 +28,7 @@
 </head>
 <body>
 
-<!--  NAV  -->
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
 <nav>
   <div class="nav-inner">
     <a href="index.html" class="nav-logo">Roulez<span>.tn</span></a>
@@ -46,7 +46,7 @@
   </div>
 </nav>
 
-<!-- PAGE HEADER  -->
+<!-- ═══════════════════════ PAGE HEADER ═══════════════════════ -->
 <div class="page-header">
   <div class="container">
     <p class="breadcrumb"><a href="index.html">Accueil</a> / Prêter mon véhicule</p>
@@ -55,7 +55,7 @@
   </div>
 </div>
 
-<!--  BENEFITS  -->
+<!-- ═══════════════════════ BENEFITS ═══════════════════════ -->
 <section style="background:var(--white);padding:40px 0;border-bottom:1px solid var(--sand)">
   <div class="container">
     <div class="grid-3">
@@ -78,7 +78,7 @@
   </div>
 </section>
 
-<!--  FORM-->
+<!-- ═══════════════════════ FORM ═══════════════════════ -->
 <section class="section-pad">
   <div class="container">
     <div style="max-width:760px;margin:0 auto">
@@ -209,7 +209,17 @@
   </div>
 </section>
 
-<!--  FOOTER  -->
+<section id="my-machines-section" class="section-pad" style="display:none; background:var(--white); border-top:1px solid var(--sand);">
+  <div class="container">
+    <div style="max-width:900px;margin:0 auto">
+      <h2 style="margin-bottom:18px">Mes véhicules à prêter</h2>
+      <div id="my-machines-empty" style="color:var(--gray);padding:18px 0;">Chargement de vos annonces...</div>
+      <div id="my-machines-list"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
 <footer>
   <div class="container">
     <div class="footer-grid">
@@ -310,25 +320,6 @@
 <script>
   // Show/hide form based on login state after checkAuthState resolves
   const origUpdateNav = window.updateNavUI || function(){};
-
-  document.addEventListener('DOMContentLoaded', () => {
-    // Poll until auth state is known
-    const timer = setInterval(() => {
-      const loginBtn = document.getElementById('nav-login-btn');
-      if (!loginBtn) return;
-      if (currentUser) {
-        showForm();
-      } else {
-        // Wait for auth check
-        setTimeout(() => {
-          if (!currentUser) showLoginRequired();
-          else showForm();
-          clearInterval(timer);
-        }, 800);
-        clearInterval(timer);
-      }
-    }, 100);
-  });
 
   function showForm() {
     document.getElementById('login-required').style.display = 'none';
@@ -437,20 +428,103 @@
     const photoFile = document.getElementById('lend-photo').files[0];
     if (photoFile) formData.append('photo', photoFile);
 
-    fetch('php/machines.php', { method: 'POST', body: formData })
-      .then(r => r.json())
+    fetch('machines.php', { method: 'POST', body: formData })
+      .then(r => r.text())
+      .then(text => {
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          throw new Error(text || 'Réponse serveur invalide.');
+        }
+        return data;
+      })
       .then(data => {
         btn.innerHTML = '📤 Publier mon annonce';
         btn.disabled  = false;
         if (data.success) {
           showToast(data.message, 'success');
+          loadMyMachines();
           setTimeout(() => window.location.href = `detail.html?id=${data.id}`, 1200);
         } else {
           showToast(data.message || 'Erreur lors de la publication.', 'error');
         }
       })
-      .catch(() => { btn.innerHTML = '📤 Publier mon annonce'; btn.disabled = false; showToast('Erreur réseau.', 'error'); });
+      .catch(err => {
+        btn.innerHTML = '📤 Publier mon annonce';
+        btn.disabled = false;
+        showToast(err.message || 'Erreur réseau.', 'error');
+      });
   }
+
+  function loadMyMachines() {
+    if (!currentUser) return;
+    fetch('machines.php?action=my_machines')
+      .then(r => r.json())
+      .then(data => {
+        if (!data.success) {
+          renderMyMachines([],'Impossible de charger vos annonces.');
+          return;
+        }
+        renderMyMachines(data.machines || []);
+      })
+      .catch(() => {
+        renderMyMachines([],'Erreur de chargement de vos annonces.');
+      });
+  }
+
+  function renderMyMachines(machines, errorMessage = '') {
+    const section = document.getElementById('my-machines-section');
+    const list = document.getElementById('my-machines-list');
+    const empty = document.getElementById('my-machines-empty');
+    if (!section || !list || !empty) return;
+
+    if (errorMessage) {
+      section.style.display = 'block';
+      list.innerHTML = '';
+      empty.textContent = errorMessage;
+      empty.style.display = 'block';
+      return;
+    }
+
+    if (!machines.length) {
+      section.style.display = 'block';
+      list.innerHTML = '';
+      empty.textContent = 'Vous n\'avez pas encore de véhicule à prêter. Ajoutez votre première annonce ci-dessus.';
+      empty.style.display = 'block';
+      return;
+    }
+
+    section.style.display = 'block';
+    empty.style.display = 'none';
+    list.innerHTML = machines.map(m => {
+      return `<article class="card card-small" style="margin-bottom:16px">
+        <div class="card-img" style="background:#f8f4f0;border-radius:16px;overflow:hidden;min-height:140px;display:flex;align-items:center;justify-content:center;">
+          ${m.photo ? `<img src="uploads/${m.photo}" alt="${m.brand} ${m.model}" style="width:100%;height:100%;object-fit:cover">` : `<div style="font-size:2.5rem">🚗</div>`}
+        </div>
+        <div style="padding:16px">
+          <h3 style="margin:0 0 8px;font-size:1rem">${m.brand} ${m.model}</h3>
+          <p style="margin:0 0 8px;color:#666;font-size:.9rem">${m.type} • ${m.city} • ${m.year}</p>
+          <p style="margin:0 0 12px;color:#333;font-size:.95rem"><strong>${parseFloat(m.price_per_day).toFixed(2)} DT / jour</strong></p>
+          <p style="margin:0 0 12px;color:#666;font-size:.85rem">Disponible du ${m.available_from} au ${m.available_to}</p>
+          <a href="detail.html?id=${m.id}" class="btn btn-outline" style="font-size:.9rem">Voir le détail</a>
+        </div>
+      </article>`;
+    }).join('');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const timer = setInterval(() => {
+      if (currentUser) {
+        showForm();
+        loadMyMachines();
+        clearInterval(timer);
+      } else if (document.getElementById('nav-login-btn').style.display !== 'none') {
+        showLoginRequired();
+        clearInterval(timer);
+      }
+    }, 100);
+  });
 </script>
 </body>
 </html>
