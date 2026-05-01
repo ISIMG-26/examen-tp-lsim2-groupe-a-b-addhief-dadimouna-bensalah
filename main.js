@@ -23,14 +23,15 @@ function showToast(message, type = 'info', duration = 3500) {
 /* ── Auth State ── */
 let currentUser = null;
 
-function checkAuthState() {
-  fetch('auth.php?action=status')
+function checkAuthState() { // Modified to return a Promise
+  return fetch('auth.php?action=status')
     .then(r => r.json())
     .then(data => {
       currentUser = data.logged_in ? data.user : null;
       updateNavUI();
+      return currentUser; // Resolve with currentUser
     })
-    .catch(() => updateNavUI());
+    .catch(err => { console.error('Error checking auth state:', err); updateNavUI(); return null; }); // Resolve with null on error
 }
 
 function updateNavUI() {
@@ -218,7 +219,7 @@ function setupAuthForms() {
           btn.innerHTML = "S'inscrire";
           btn.disabled = false;
           if (data.success) {
-            currentUser = { full_name: data.message };
+            currentUser = { full_name: data.full_name }; // Use data.full_name from PHP
             updateNavUI();
             showToast(data.message, 'success');
             closeModal('auth-modal');
@@ -319,7 +320,9 @@ function highlightActiveNav() {
 
 /* ── Init ── */
 document.addEventListener('DOMContentLoaded', function() {
-  checkAuthState();
+  checkAuthState().then(() => { // Ensure auth state is checked before setting up forms
+    // No specific action needed here, as updateNavUI is called inside checkAuthState
+  });
   setupAuthForms();
   setupCardInputs();
   setupMobileNav();

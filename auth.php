@@ -65,7 +65,7 @@ function handleRegister() {
         $_SESSION['user_id']   = $user_id;
         $_SESSION['full_name'] = $full_name;
         $_SESSION['email']     = $email;
-        echo json_encode(['success' => true, 'message' => 'Inscription réussie! Bienvenue ' . $full_name]);
+        echo json_encode(['success' => true, 'message' => 'Inscription réussie! Bienvenue ' . $full_name, 'full_name' => $full_name]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'inscription.']);
     }

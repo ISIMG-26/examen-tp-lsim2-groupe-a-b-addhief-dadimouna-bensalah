@@ -514,16 +514,14 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    const timer = setInterval(() => {
-      if (currentUser) {
+    checkAuthState().then(() => { // Wait for checkAuthState to resolve
+      if (currentUser) { // Now currentUser is reliably set
         showForm();
         loadMyMachines();
-        clearInterval(timer);
-      } else if (document.getElementById('nav-login-btn').style.display !== 'none') {
+      } else {
         showLoginRequired();
-        clearInterval(timer);
       }
-    }, 100);
+    });
   });
 </script>
 </body>

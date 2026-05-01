@@ -39,7 +39,7 @@
 <div class="page-header">
   <div class="container">
     <p class="breadcrumb"><a href="index.html">Accueil</a> / <a href="browser.html">Annonces</a> / <span id="breadcrumb-title">Détail</span></p>
-    <h1 id="page-title">Chargement…</h1>
+    <h1 id="page-title">Détail du véhicule</h1>
   </div>
 </div>
 
@@ -79,6 +79,7 @@
             <div>
               <div style="font-weight:700" id="owner-name">—</div>
               <div style="font-size:0.85rem;color:var(--gray)" id="owner-phone">—</div>
+              <div style="font-size:0.85rem;color:var(--gray)" id="owner-email">—</div>
             </div>
           </div>
         </div>
@@ -175,7 +176,7 @@
       </div>
     </div>
 
-    <div id="detail-debug" style="display:none; background: #fff4f0; color: #b33; border: 1px solid #f5c2b4; border-radius: 12px; padding: 16px; margin-top: 24px; text-align:center;"></div>
+    <div id="detail-debug" style="display:none; background: #fff4f0; color: #b33; border: 1px solid #f5c2b4; border-radius: 12px; padding: 20px; margin-top: 24px; font-family: monospace; font-size: 0.9rem; word-break: break-word; white-space: pre-wrap;"></div>
 
     <div id="error-state" class="empty-state" style="display:none">
       <div class="empty-icon">⚠️</div>
@@ -297,8 +298,6 @@
 
 <script src="main.js"></script>
 <script>
-  const TYPE_LABELS = { car: 'Voiture', bike: 'Vélo', motorcycle: 'Moto', scooter: 'Scooter' };
-  const TYPE_ICONS  = { car: '🚗', bike: '🚲', motorcycle: '🏍️', scooter: '🛵' };
 
   let machine = null;
   const machineId = new URLSearchParams(window.location.search).get('id');
@@ -323,25 +322,34 @@
     }
   }
 
-  window.addEventListener('error', function(event) {
-    showError(event.message || 'Erreur JavaScript inconnue.');
-  });
-
-  window.addEventListener('unhandledrejection', function(event) {
-    showError(event.reason ? event.reason.toString() : 'Erreur non gérée.');
-  });
-
-  document.addEventListener('DOMContentLoaded', initDetailPage);
-  if (document.readyState !== 'loading') initDetailPage();
+  // N'appeler initDetailPage qu'une seule fois
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDetailPage);
+  } else {
+    initDetailPage();
+  }
 
   function loadMachine() {
+    // Vérifier qu'on est bien sur HTTP (pas file://)
+    if (window.location.protocol === 'file:') {
+      showError('Vous accédez au site via file://. Vous devez utiliser un serveur local : http://localhost/votre_dossier/detail.html?id=' + machineId);
+      return;
+    }
+
     const url = `machines.php?action=detail&id=${encodeURIComponent(machineId)}`;
     fetch(url)
       .then(r => {
-        if (!r.ok) throw new Error('Erreur réseau');
-        return r.json();
+        if (!r.ok) throw new Error(`Erreur HTTP ${r.status} — vérifiez que Apache et MySQL sont actifs dans XAMPP.`);
+        return r.text();
       })
-      .then(data => {
+      .then(text => {
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch(e) {
+          showError('Le serveur PHP a renvoyé une erreur au lieu de JSON : ' + text.substring(0, 400));
+          return;
+        }
         document.getElementById('loading-state').style.display = 'none';
         if (!data.success) { showError(data.message || 'Véhicule introuvable.'); return; }
         machine = data.machine;
@@ -349,7 +357,7 @@
       })
       .catch(e => {
         console.error('Erreur lors du chargement:', e);
-        showError(e.message || 'Erreur lors du chargement du véhicule.');
+        showError(e.message || 'Impossible de contacter le serveur. Vérifiez que XAMPP (Apache + MySQL) est bien démarré.');
       });
   }
 
@@ -381,6 +389,7 @@
     document.getElementById('spec-to').textContent    = new Date(m.available_to).toLocaleDateString('fr-FR');
     document.getElementById('owner-name').textContent  = m.owner_name;
     document.getElementById('owner-phone').textContent = m.owner_phone;
+    document.getElementById('owner-email').textContent = m.owner_email; // Add this line
     document.getElementById('owner-avatar').textContent = m.owner_name.charAt(0).toUpperCase();
     document.getElementById('booking-price').textContent = parseFloat(m.price_per_day).toFixed(0) + ' DT';
 
