@@ -1,7 +1,4 @@
-// ============================================
-// ROULEZ.TN - Main JavaScript
-// Native JS — No frameworks
-// ============================================
+
 
 /* ── Toast Notifications ── */
 function showToast(message, type = 'info', duration = 3500) {

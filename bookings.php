@@ -1,7 +1,4 @@
 <?php
-// ============================================
-// ROULEZ.TN - Bookings Handler
-// ============================================
 require_once 'config.php';
 header('Content-Type: application/json');
 
